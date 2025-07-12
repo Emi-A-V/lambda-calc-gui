@@ -1,4 +1,5 @@
 [submodule "lambda-calc"]
-  path = lambdaEngine
-  url = https://github.com/Emi-A-V/lambda-calc.git
+	path = lambda-calc
+	url = https://github.com/Emi-A-V/lambda-calc.git
   branch = engine
+	engine = engine
