@@ -1,8 +1,6 @@
 <script lang="ts">
-import {Calculate} from '../../wailsjs/go/main/App';
-import { parse, HtmlGenerator } from 'latex.js';
-
-parse()
+import { Calculate } from '../../wailsjs/go/main/App';
+// import { parse, HtmlGenerator } from 'latex.js';
 
 export default {
     data() {
@@ -14,6 +12,7 @@ export default {
             history: [""],
             historyPos: 0,
             resultText: "",
+            checked: false,
         }
     },
     mounted() {
@@ -21,6 +20,13 @@ export default {
         document.getElementById('keyboard-scroll')?.addEventListener("wheel", this.keyboardScroll);
     },
     methods: {
+        modelLightSwtich(event: Event) {
+            if( this.checked ) {
+                document.documentElement.setAttribute("data-theme", "dark")
+            } else {
+                document.documentElement.setAttribute("data-theme", "light")
+            }
+        },
         keyboardScrollNum(event: Event) {
             this.scrollPos = 0;
         },
@@ -50,13 +56,13 @@ export default {
 
         input(event: KeyboardEvent) {
             // console.log(event.key);
-            
-            if(event.ctrlKey && (event.key == 'Backspace' || event.key == 'Delete')) {
+
+            if (event.ctrlKey && (event.key == 'Backspace' || event.key == 'Delete')) {
                 this.clear();
-            } else if(event.key == 'Backspace') {
+            } else if (event.key == 'Backspace') {
                 this.remove();
             } else if (event.key == 'Delete') {
-                if(this.pos < this.equation.length) {
+                if (this.pos < this.equation.length) {
                     this.pos += 1;
                 }
                 this.remove();
@@ -73,20 +79,20 @@ export default {
                 this.equation = this.history[this.historyPos];
                 this.pos = this.equation.length;
             } else if (event.key == 'ArrowLeft') {
-                if(this.pos > 0) {
+                if (this.pos > 0) {
                     this.pos -= 1;
                 }
             } else if (event.key == 'ArrowRight') {
-                if(this.pos < this.equation.length) {
+                if (this.pos < this.equation.length) {
                     this.pos += 1;
                 }
             } else if (event.key == 'Enter') {
-                if(this.equation.length >= 1) {
+                if (this.equation.length >= 1) {
                     this.exe();
                 }
-            } else if([
-                '1','2','3','4','5','6','7','8','9','0',
-                '+','-','*','/','^','%','(',')','=','.','^^',
+            } else if ([
+                '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+                '+', '-', '*', '/', '^', '%', '(', ')', '=', '.', '^^',
                 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
                 ' ',
             ].includes(event.key)) {
@@ -129,7 +135,31 @@ export default {
 
 <template>
     <div class="grid">
-        <div class="lsidebar">1. 2. 3.</div>
+        <div class="lsidebar">
+            <label class="theme-slider">
+                <input type="checkbox" class="switch-check" name="color-theme-switch" id="color-theme-switch" v-model="checked" @change="modelLightSwtich">
+                <div class="color-theme-switch">
+                    <span class="slider">
+                        <!-- <img class="switch-img" src="../assets/images/Sun.svg"> -->
+                        <div class="switch-img">
+                            <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                                <g>  
+                                    <circle style="fill:none;paint-order:stroke fill markers;stroke-width:35;stroke-dasharray:none" id="path1" cx="256" cy="256" r="100" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1" width="35" height="95" x="238.13339" y="13" rx="0" ry="0" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-8" width="35" height="95" x="238.13339" y="404" rx="0" ry="0" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-5" width="35" height="95" x="-273.5" y="13.000002" rx="0" ry="0" transform="rotate(-90)" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-8-5" width="35" height="95" x="-273.5" y="404" rx="0" ry="0" transform="rotate(-90)" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-5-1" width="35" height="95" x="-17.500008" y="119.0387" rx="0" ry="0" transform="rotate(-45)" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-8-5-5" width="35" height="95" x="-17.500008" y="510.03864" rx="0" ry="0" transform="rotate(-45)" />
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-5-1-1" width="35" height="95" x="-379.53867" y="-242.99997" rx="0" ry="0" transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,0,0)" /> 
+                                    <rect style="stroke:none;paint-order:stroke fill markers" id="rect1-8-5-5-4" width="35" height="95" x="-379.53867" y="147.99997" rx="0" ry="0" transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,0,0)" />
+                                </g>
+                            </svg>
+                        </div>
+                    </span>
+                </div>
+            </label>
+        </div>
 
 
         <div class="main">
@@ -153,7 +183,7 @@ export default {
             </div>
             <div class="keyboard" id="keyboard-scroll">
                 <div class="keys key-1">
-                    <div class="keys-container">
+                    <div class="keys-container key-split">
                         <div class="k-container num-container">
                             <div class="key" @click="enter('1')">1</div>
                             <div class="key" @click="enter('2')">2</div>
@@ -188,8 +218,14 @@ export default {
                         </div>
                     </div>
                 </div>
-                <div class="keys key-2">+-*/</div>
-                <div class="keys key-3">log cos sin tan</div>
+                <div class="keys key-2">
+                        <div class="keys-container">
+                            <div class="key" @click="enter('define ')">define</div>
+                            <div class="key" @click="enter('drop ')">drop</div>
+                            <div class="key" @click="enter('solve ')">solve</div>
+                        </div>
+                    </div>
+                    <div class="keys key-3">log cos sin tan</div>
             </div>
         </div>
     </div>
@@ -219,6 +255,61 @@ export default {
     grid-area: lsidebar;
     background-color: var(--mantle);
     border: 1px solid var(--crust);
+
+    padding: 0.3rem;
+
+    display: flex;
+    justify-content: center;
+
+    .theme-slider {
+        position: relative;
+        width: 25px;
+        height: 50px;
+
+        .switch-check { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-check:checked + .color-theme-switch .switch-img {
+            transform: translateY(25px);
+        }
+
+        .color-theme-switch {
+            position: absolute;
+            cursor: pointer;
+
+            outline: 1px solid var(--crust);
+            border-radius: 20px;
+            background-color: var(--base);
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+
+            display: flex;
+
+            .switch-img {
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 19px;
+                height: 19px;
+                transition: transform .4s;
+                outline: 1px solid var(--crust);
+                border-radius: 50%;
+                background-color: var(--mantle);
+
+                svg {
+                    width: 100%;
+                    height: 100%;
+                    stroke: var(--text);
+                    fill: var(--text);
+                }
+            }  
+        }
+    }
 }
 
 .main {
@@ -357,48 +448,64 @@ export default {
                 position: absolute;
 
                 display: grid;
-                grid-template-columns: 3fr 4fr;
+                grid-template-rows: 1fr 1fr 1fr 1fr;
+                grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 
-                .k-container {
-                    padding: 1rem;
-                    gap: 1rem;
-                    display: grid;
+                padding: 1rem;
+                gap: 1rem;
+                
+                .key {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
 
-                    .key {
-                        width: 100%;
-                        height: 100%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        
-                        background-color: var(--base);
+                    background-color: var(--base);
 
-                        border-radius: 10px;
-                        border: 1px solid var(--surface0);
+                    border-radius: 10px;
+                    border: 1px solid var(--surface0);
 
-                        user-select: none;
+                    user-select: none;
 
-                        font-size: 20px;
-                    }
-
-                    .blue-key {
-                        background-color: var(--sky);
-                        color: var(--base);
-                    }
-                    .red-key {
-                        background-color: var(--maroon);
-                        color: var(--base);
-                    }
+                    font-size: 20px;
                 }
 
+                .blue-key {
+                    background-color: var(--sky);
+                    color: var(--base);
+                }
+
+                .red-key {
+                    background-color: var(--maroon);
+                    color: var(--base);
+                }
+            }
+
+            .key-split {
+                grid-template-columns: 3fr 4fr;
+                grid-template-rows: 1fr;
+                padding: 0;
+                gap: 0;
+
                 .num-container {
+                    height: 100%;
+                    width: 100%;
                     grid-template-rows: 1fr 1fr 1fr 1fr;
                     grid-template-columns: 1fr 1fr 1fr;
                 }
 
                 .symbol-container {
+                    height: 100%;
+                    width: 100%;
                     grid-template-rows: 1fr 1fr 1fr 1fr;
                     grid-template-columns: 1fr 1fr 1fr 1fr;
+                }
+
+                .k-container {
+                    padding: 1rem;
+                    gap: 1rem;
+                    display: grid;
                 }
             }
         }

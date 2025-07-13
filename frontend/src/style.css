@@ -107,8 +107,8 @@
     --crust: #dce0e8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+ /* @media (prefers-color-scheme: dark) */
+[data-theme=dark] {
     --rosewater: #f2d5cf;
     --flamingo: #eebebe;
     --pink: #f4b8e4;
@@ -135,7 +135,6 @@
     --base: #303446;
     --mantle: #292c3c;
     --crust: #232634;
-  }
 }
 
 body {

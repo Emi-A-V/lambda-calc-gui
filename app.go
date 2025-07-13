@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"lambda-calc-gui/lambda-calc"
+	"fmt"
+	lambdaengine "lambda-calc-gui/lambda-calc"
 )
 
 // App struct
@@ -19,16 +20,15 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	fmt.Printf("Starting Up")
 	lambdaengine.Start()
 }
 
-type Config struct {
-	Symbols map[string]string
-}
-
-var config Config
-
 func (a *App) Calculate(equation string) string {
+	fmt.Println("Entered: " + equation)
+
 	res := lambdaengine.Input(equation)
+	
+
 	return res.Str
 }
