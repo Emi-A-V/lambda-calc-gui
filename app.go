@@ -24,11 +24,18 @@ func (a *App) startup(ctx context.Context) {
 	lambdaengine.Start()
 }
 
-func (a *App) Calculate(equation string) string {
+type CalculationResult struct {
+	Equation string `json:equation`
+	Error    string `json:error`
+	ErrorID  int    `json:error_id`
+}
+
+func (a *App) Calculate(equation string) CalculationResult {
 	fmt.Println("Entered: " + equation)
 
-	res := lambdaengine.Input(equation)
-	
+	res, eq := lambdaengine.Input(equation)
 
-	return res.Str
+	fmt.Printf("%v\n", res)
+
+	return CalculationResult{eq, res.Str, res.ErrID}
 }

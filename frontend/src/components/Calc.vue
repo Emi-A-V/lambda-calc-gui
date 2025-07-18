@@ -2,6 +2,12 @@
 import { Calculate } from '../../wailsjs/go/main/App';
 // import { parse, HtmlGenerator } from 'latex.js';
 
+interface Result {
+    Equation : string;
+    Error : string;
+    ErrorID : number;
+}
+
 export default {
     data() {
         return {
@@ -11,7 +17,7 @@ export default {
             pos: 0,
             history: [""],
             historyPos: 0,
-            resultText: "",
+            exchangeHistory: [] as Result[],
             checked: false,
         }
     },
@@ -66,18 +72,18 @@ export default {
                     this.pos += 1;
                 }
                 this.remove();
-            } else if (event.key == 'ArrowUp') {
+            } else if (event.key == 'ArrowDown') {
                 if (this.historyPos < this.history.length - 1) {
                     this.historyPos += 1;
+                    this.equation = this.history[this.historyPos];
+                    this.pos = this.equation.length;
                 }
-                this.equation = this.history[this.historyPos];
-                this.pos = this.equation.length;
-            } else if (event.key == 'ArrowDown') {
+            } else if (event.key == 'ArrowUp') {
                 if (this.historyPos > 0) {
                     this.historyPos -= 1;
+                    this.equation = this.history[this.historyPos];
+                    this.pos = this.equation.length;
                 }
-                this.equation = this.history[this.historyPos];
-                this.pos = this.equation.length;
             } else if (event.key == 'ArrowLeft') {
                 if (this.pos > 0) {
                     this.pos -= 1;
@@ -103,6 +109,7 @@ export default {
             if (char == '^^') {
                 char = '^';
             }
+            this.historyPos = this.history.length;
             this.equation = [this.equation.slice(0, this.pos), char, this.equation.slice(this.pos)].join('');
             this.pos += char.length;
         },
@@ -119,15 +126,29 @@ export default {
             this.pos = 0;
         },
         exe() {
+            this.exchangeHistory.push({"Equation": this.equation, "Error": "", "ErrorID":200})
             Calculate(this.equation).then(result => {
-                this.resultText = result
+                this.exchangeHistory.push(result)
+                let scroll = document.getElementById("exchange-scroll-container")
+                if (scroll != undefined) {
+                    scroll.scrollBy({top: -100, behavior: 'smooth'})
+                    console.log("Scroll");
+                } else {
+                    console.log("Not able to scroll");
+                }
             })
             console.log(this.equation);
             if (this.history[this.history.length - 1] != this.equation) {
                 this.history.push(this.equation);
             }
             this.clear();
-            this.historyPos = this.history.length - 1;
+            this.historyPos = this.history.length;
+        },
+        clearWindow() {
+            /* this.history = [];
+            this.historyPos = 0; */
+            this.exchangeHistory = [];
+            this.clear();
         }
     }
 }
@@ -159,11 +180,30 @@ export default {
                     </span>
                 </div>
             </label>
+            <div class="placeholder"></div>
+            <div class="sidebar-button clear-button bad-action" @click="clearWindow">
+                <label for="">
+                    <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                        <g xmlns="http://www.w3.org/2000/svg" inkscape:label="Layer 1" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:groupmode="layer" id="layer1">
+                            <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect1" width="285.50574" height="344.84955" x="111.17564" y="141.96701" rx="28.489468" ry="28.555338"/>
+                            <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect2" width="416.39383" height="70.546059" x="45.731598" y="70.258781" rx="14.022497" ry="13.172651"/>
+                            <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect3" width="232.2858" height="49.038113" x="137.78563" y="20.803186" ry="11.254227"/>
+                        </g>
+                    </svg>
+                </label>
+            </div>
         </div>
 
 
         <div class="main">
-            <p>{{ resultText }}</p>
+            <div class="exchange-container">
+                <div class="exchange-obj" v-for="item in exchangeHistory" id="exchange-scroll-container">
+                    <div class="exchange-obj-container">
+                        <p v-if="item.Error != ''">{{ item.ErrorID }} : {{ item.Error }}</p>
+                        <p>{{ item.Equation }}</p>
+                    </div>
+                </div>
+            </div>
             <div class="input-bar">
                 <p id="input" class="text-input">{{ equation }}</p>
                 <div class="pos-line"></div>
@@ -258,8 +298,39 @@ export default {
 
     padding: 0.3rem;
 
-    display: flex;
-    justify-content: center;
+    gap: 1rem;
+    display: grid;
+    grid-template-rows: 1fr 1fr auto;
+    justify-items: center;
+
+    .sidebar-button {
+        position: relative;
+        cursor: pointer;
+        background-color: var(--base);
+        border: 1px solid var(--crust);
+        border-radius: 10px;
+        width: 100%;
+        height: 2.5rem;
+        text-align: center;
+
+        svg {
+            width: 1.5rem;
+            stroke: var(--text);
+            fill: var(--text);
+        }
+    }
+
+    /* .bad-action {
+        transition-property: background-color, color;
+        transition-duration: 0.3s;
+    } */
+
+    .bad-action:hover {
+        background-color: var(--maroon);
+        color: var(--crust);
+        stroke: var(--crust);
+        fill: var(--crust);
+    }
 
     .theme-slider {
         position: relative;
@@ -318,6 +389,34 @@ export default {
     border: 1px solid var(--crust);
 
     position: relative;
+
+
+    .exchange-container {
+        position: absolute;
+        top: 0;
+        bottom: 5rem;
+        left: 0;
+        right: 0;
+        overflow-y: scroll;
+        padding: 1rem;
+
+        display: flex;
+        flex-direction: column;
+
+        .exchange-obj {
+            align-self: flex-start;
+            padding: 1rem;
+            margin-block: 0.5rem;
+            width: fit-content;
+
+            border: 1px solid var(--crust);
+            border-radius: 10px;
+            background-color: var(--mantle);
+        }
+        .exchange-obj:nth-child(odd) { 
+            align-self: flex-end;
+        }
+    }
 
     .input-bar {
         position: absolute;
@@ -460,6 +559,8 @@ export default {
                     display: flex;
                     align-items: center;
                     justify-content: center;
+
+                    cursor: pointer;
 
                     background-color: var(--base);
 
