@@ -2,6 +2,13 @@
 import { Calculate } from '../../wailsjs/go/main/App';
 // import { parse, HtmlGenerator } from 'latex.js';
 
+const allowed_symbols = [
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '+', '-', '*', '/', '^', '%', '(', ')', '=', '.', '^^', '^',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    ' ',
+]
+
 interface Result {
     Equation : string;
     Error : string;
@@ -15,6 +22,7 @@ export default {
             scrollDelay: false,
             equation: "",
             pos: 0,
+            eq_len: 0,
             history: [""],
             historyPos: 0,
             exchangeHistory: [] as Result[],
@@ -23,6 +31,7 @@ export default {
     },
     mounted() {
         document.addEventListener("keydown", this.input);
+        document.addEventListener("paste", this.paste)
         document.getElementById('keyboard-scroll')?.addEventListener("wheel", this.keyboardScroll);
     },
     methods: {
@@ -72,17 +81,23 @@ export default {
                     this.pos += 1;
                 }
                 this.remove();
+            } else if (event.ctrlKey && event.key == 'ArrowLeft') {
+                this.pos = 0;
+            } else if (event.ctrlKey && event.key == 'ArrowRight') {
+                this.pos = this.eq_len;
             } else if (event.key == 'ArrowDown') {
                 if (this.historyPos < this.history.length - 1) {
                     this.historyPos += 1;
                     this.equation = this.history[this.historyPos];
                     this.pos = this.equation.length;
+                    this.eq_len = this.equation.length;
                 }
             } else if (event.key == 'ArrowUp') {
                 if (this.historyPos > 0) {
                     this.historyPos -= 1;
                     this.equation = this.history[this.historyPos];
                     this.pos = this.equation.length;
+                    this.eq_len = this.equation.length;
                 }
             } else if (event.key == 'ArrowLeft') {
                 if (this.pos > 0) {
@@ -96,21 +111,21 @@ export default {
                 if (this.equation.length >= 1) {
                     this.exe();
                 }
-            } else if ([
-                '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-                '+', '-', '*', '/', '^', '%', '(', ')', '=', '.', '^^',
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-                ' ',
-            ].includes(event.key)) {
+            } else if (event.key == 'v' && event.ctrlKey) {
+                return
+            } else if (allowed_symbols.includes(event.key)) {
                 this.enter(event.key);
             }
         },
         enter(char: String) {
             if (char == '^^') {
                 char = '^';
+            } else if (char == ' ' && this.equation[this.pos - 1] == ' ') {                
+                return
             }
             this.historyPos = this.history.length;
             this.equation = [this.equation.slice(0, this.pos), char, this.equation.slice(this.pos)].join('');
+            this.eq_len = this.equation.length
             this.pos += char.length;
         },
         remove() {
@@ -124,6 +139,7 @@ export default {
         clear() {
             this.equation = '';
             this.pos = 0;
+            this.eq_len = 0;
         },
         exe() {
             this.exchangeHistory.push({"Equation": this.equation, "Error": "", "ErrorID":200})
@@ -151,6 +167,21 @@ export default {
                 scroll_obj.scrollBy({ behavior: 'smooth', top: scroll_obj.scrollHeight });
             } else {
                 console.log("Not able to scroll");
+            }
+        },
+        paste(event: ClipboardEvent) {
+            event.preventDefault();
+
+            const paste = event.clipboardData?.getData("text");
+
+            if (paste == undefined) {
+                return
+            }
+
+            for (let i = 0; i < paste.length; i++) {
+                if (allowed_symbols.includes(paste.charAt(i))) {
+                    this.enter(paste.charAt(i));
+                }
             }
         }
     }
@@ -227,15 +258,17 @@ export default {
                                     </span>
                                 </span>
                             </p>
-                            <div class="infoPop">
+                        <div class="infoPop">
                             {{ item.Error }}
-                            </div> 
-                        </div>
+                        </div> 
+                    </div>
                 </div>
+                <div class="scroll-buffer"></div>
             </div>
-            <div class="input-bar">
-                <p id="input" class="text-input">{{ equation }}</p>
-                <!-- <div class="pos-line"></div> -->
+            <div class="input-bar-container">
+                <div class="input-bar">
+                    <p id="input" class="text-input">{{ equation }}</p>
+                </div>
             </div>
         </div>
 
@@ -423,7 +456,7 @@ export default {
     .exchange-container {
         position: absolute;
         top: 0.2rem;
-        bottom: 5rem;
+        bottom: 0;
         left: 0;
         right: 0.2rem;
         overflow-y: scroll;
@@ -431,6 +464,10 @@ export default {
 
         display: flex;
         flex-direction: column;
+
+        .scroll-buffer {
+            margin-bottom: 5rem;
+        }
 
         .exchange-obj {
             align-self: flex-start;
@@ -517,16 +554,20 @@ export default {
             background: var(--crust);
         }
 
-    .input-bar {
+
+    .input-bar-container {
         position: absolute;
-
-        min-height: 44px;
-        /* max-height: 30%; */
-
-        left: 20%;
-        right: 20%;
+        left: 0;
+        right: 0;
         bottom: 1rem;
-        
+
+        display: flex;
+        justify-content: center;
+    }
+
+    .input-bar {
+        min-height: 44px;
+        width: 50ch;
         border-radius: 10px;
         border: 1px solid var(--surface0);
         
@@ -546,6 +587,10 @@ export default {
 
             position: relative;
         }
+        .text-input::before {
+            content:"";
+            display:inline-block;
+        }
 
         .text-input::after {
             content: '';
@@ -553,24 +598,24 @@ export default {
             bottom: 12px;
             left: 10px;
 
-            translate: calc(1ch * v-bind(pos)) 0;
+            translate: calc(1ch * mod(v-bind(pos), 42)) 
+                calc(
+                    2ch * (
+                        round(
+                            down, 
+                            (
+                                v-bind(pos) - (v-bind(eq_len) - mod(
+                                    v-bind(eq_len), 42
+                                    ))
+                            )/ 42
+                        )
+                    )
+                );
             transition: translate 0.1s ease-out;
 
             height: 20px;
             width: 1px;
             background-color: var(--blue);
-        }
-
-        .pos-line {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-
-            /* translate: calc(1.13ch * v-bind(pos)) 0; */
-
-            height: 20px;
-            width: 1px;
-            /* background-color: var(--red); */
         }
     }
 }
