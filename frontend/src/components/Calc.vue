@@ -129,15 +129,10 @@ export default {
             this.exchangeHistory.push({"Equation": this.equation, "Error": "", "ErrorID":200})
             Calculate(this.equation).then(result => {
                 this.exchangeHistory.push(result)
-                let scroll = document.getElementById("exchange-scroll-container")
-                if (scroll != undefined) {
-                    scroll.scrollBy({top: -100, behavior: 'smooth'})
-                    console.log("Scroll");
-                } else {
-                    console.log("Not able to scroll");
-                }
+                this.$nextTick(() => {
+                    this.scroll();
+                });
             })
-            console.log(this.equation);
             if (this.history[this.history.length - 1] != this.equation) {
                 this.history.push(this.equation);
             }
@@ -149,6 +144,14 @@ export default {
             this.historyPos = 0; */
             this.exchangeHistory = [];
             this.clear();
+        },
+        scroll() {
+            let scroll_obj = document.getElementById("exchange-scroll-container")
+            if (scroll_obj != undefined) {
+                scroll_obj.scrollBy({ behavior: 'smooth', top: scroll_obj.scrollHeight });
+            } else {
+                console.log("Not able to scroll");
+            }
         }
     }
 }
@@ -184,7 +187,7 @@ export default {
             <div class="sidebar-button clear-button bad-action" @click="clearWindow">
                 <label for="">
                     <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
-                        <g xmlns="http://www.w3.org/2000/svg" inkscape:label="Layer 1" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:groupmode="layer" id="layer1">
+                        <g xmlns="http://www.w3.org/2000/svg">
                             <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect1" width="285.50574" height="344.84955" x="111.17564" y="141.96701" rx="28.489468" ry="28.555338"/>
                             <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect2" width="416.39383" height="70.546059" x="45.731598" y="70.258781" rx="14.022497" ry="13.172651"/>
                             <rect style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:25;stroke-dasharray:none" id="rect3" width="232.2858" height="49.038113" x="137.78563" y="20.803186" ry="11.254227"/>
@@ -196,17 +199,43 @@ export default {
 
 
         <div class="main">
-            <div class="exchange-container">
-                <div class="exchange-obj" v-for="item in exchangeHistory" id="exchange-scroll-container">
-                    <div class="exchange-obj-container">
-                        <p v-if="item.Error != ''">{{ item.ErrorID }} : {{ item.Error }}</p>
-                        <p>{{ item.Equation }}</p>
-                    </div>
+            <div class="exchange-container" id="exchange-scroll-container">
+                    <div class="exchange-obj" v-for="item in exchangeHistory">
+                        <div class="exchange-obj-container">
+                            <p>
+                                <!-- {{ item.ErrorID }} : -->
+                                <span v-if="item.Error != '' && item.Equation == ''" class="fatalError">
+                                    <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" id="svg1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                                        <g>
+                                            <circle style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:50;stroke-dasharray:none" id="path1" cx="256" cy="256" r="228.60632"/>
+                                            <rect style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;paint-order:stroke fill markers" id="rect1" width="65.602287" height="350.21713" x="-32.801144" y="186.9301" ry="35.191429" transform="rotate(-45)" rx="32.801144"/>
+                                            <rect style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;paint-order:stroke fill markers" id="rect1-8" width="65.602287" height="350.21713" x="-394.83981" y="-175.10857" ry="35.191429" transform="matrix(-0.70710678,-0.70710678,-0.70710678,0.70710678,0,0)" rx="32.801144"/>
+                                        </g>
+                                    </svg>
+                                    {{ item.Error }}
+                                </span>
+                                <span class="equation">
+                                    {{ item.Equation }}
+                                    <span v-if="item.Error != '' && item.Equation != ''" class="errorInfo">
+                                        <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                                          <g>
+                                            <circle style="fill-opacity:1;paint-order:stroke fill markers;fill:none;stroke-width:50;stroke-dasharray:none" id="path1" cx="256" cy="256" r="228.60632"/>
+                                            <rect style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;paint-order:stroke fill markers" id="rect1" width="65.602295" height="222.78252" x="223.19885" y="192.94597" ry="35.191429" rx="32.801144"/>
+                                            <circle style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" id="path2" cx="256" cy="145.55412" r="32.5"/>
+                                          </g>
+                                        </svg>
+                                    </span>
+                                </span>
+                            </p>
+                            <div class="infoPop">
+                            {{ item.Error }}
+                            </div> 
+                        </div>
                 </div>
             </div>
             <div class="input-bar">
                 <p id="input" class="text-input">{{ equation }}</p>
-                <div class="pos-line"></div>
+                <!-- <div class="pos-line"></div> -->
             </div>
         </div>
 
@@ -259,12 +288,12 @@ export default {
                     </div>
                 </div>
                 <div class="keys key-2">
-                        <div class="keys-container">
-                            <div class="key" @click="enter('define ')">define</div>
-                            <div class="key" @click="enter('drop ')">drop</div>
-                            <div class="key" @click="enter('solve ')">solve</div>
-                        </div>
+                    <div class="keys-container">
+                        <div class="key" @click="enter('define ')">define</div>
+                        <div class="key" @click="enter('drop ')">drop</div>
+                        <div class="key" @click="enter('solve ')">solve</div>
                     </div>
+                </div>
                     <div class="keys key-3">log cos sin tan</div>
             </div>
         </div>
@@ -393,10 +422,10 @@ export default {
 
     .exchange-container {
         position: absolute;
-        top: 0;
+        top: 0.2rem;
         bottom: 5rem;
         left: 0;
-        right: 0;
+        right: 0.2rem;
         overflow-y: scroll;
         padding: 1rem;
 
@@ -408,37 +437,128 @@ export default {
             padding: 1rem;
             margin-block: 0.5rem;
             width: fit-content;
-
+            max-width: 100%;
             border: 1px solid var(--crust);
             border-radius: 10px;
             background-color: var(--mantle);
+
+
+            span {
+                word-wrap: break-word;
+            }
+
+            .errorInfo, .fatalError {
+                /* display: inline-flex;
+                align-items: center; */
+                svg {
+                    position: relative;
+                    top: 2px;
+                    width: 1rem;
+                    display: inline;
+                }
+            }
+
+            .fatalError {
+                svg {
+                    margin-right: 0.5rem;
+                    fill: var(--red);
+                    stroke: var(--red);
+                }
+            }
+
+            .errorInfo {
+                position: relative;
+                fill: var(--yellow);
+                stroke: var(--yellow);
+                margin-left: 0.5rem;
+            }
+
+            .infoPop:has(.errorInfo:hover) {
+                display: block;
+                position: absolute;
+                bottom: 100%;
+                left: 100%;
+                content: '';
+                background-color: var(--base);
+                border: 1px solid var(--crust);
+                border-radius: 10px;
+
+                padding: 1rem;
+
+                height: min-content;
+                max-height: 5rem;
+                width: max-content;
+            }
+
+            .infoPop {
+                display: none;
+            }
         }
+
         .exchange-obj:nth-child(odd) { 
             align-self: flex-end;
         }
+    
     }
+
+    .exchange-container::-webkit-scrollbar {
+        margin-left: 1rem;
+        width: 0.5rem;
+    }
+
+        /* Track */
+    .exchange-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+        /* Handle */
+    .exchange-container::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background: var(--crust);
+        }
 
     .input-bar {
         position: absolute;
 
-        min-height: 50px;
-        max-height: 30%;
+        min-height: 44px;
+        /* max-height: 30%; */
 
         left: 20%;
         right: 20%;
-        bottom: 15px;
-
+        bottom: 1rem;
+        
         border-radius: 10px;
         border: 1px solid var(--surface0);
-
+        
         background-color: var(--mantle);
-
+        
         .text-input {
-            width: 100%;
+            content: "";
+            word-wrap: break-word;
+
+            --parent-width: max-width;
+
+            /* min-height: 20px; */
             height: 100%;
             padding: 10px;
 
             font-size: 18px;
+
+            position: relative;
+        }
+
+        .text-input::after {
+            content: '';
+            position: absolute;
+            bottom: 12px;
+            left: 10px;
+
+            translate: calc(1ch * v-bind(pos)) 0;
+            transition: translate 0.1s ease-out;
+
+            height: 20px;
+            width: 1px;
+            background-color: var(--blue);
         }
 
         .pos-line {
@@ -446,11 +566,11 @@ export default {
             top: 10px;
             left: 10px;
 
-            translate: calc(1.13ch * v-bind(pos)) 0;
+            /* translate: calc(1.13ch * v-bind(pos)) 0; */
 
             height: 20px;
             width: 1px;
-            background-color: var(--text);
+            /* background-color: var(--red); */
         }
     }
 }
