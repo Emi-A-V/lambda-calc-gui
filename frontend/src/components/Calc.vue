@@ -255,13 +255,13 @@ export default {
                                             <circle style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" id="path2" cx="256" cy="145.55412" r="32.5"/>
                                           </g>
                                         </svg>
-                                    </span>
                                 </span>
-                            </p>
-                        <div class="infoPop">
-                            {{ item.Error }}
-                        </div> 
+                            </span>
+                        </p>
                     </div>
+                    <div class="infoPop" v-if="item.Error != '' && item.Equation != ''">
+                        {{ item.Error }}
+                    </div> 
                 </div>
                 <div class="scroll-buffer"></div>
             </div>
@@ -412,7 +412,6 @@ export default {
         .color-theme-switch {
             position: absolute;
             cursor: pointer;
-
             outline: 1px solid var(--crust);
             border-radius: 20px;
             background-color: var(--base);
@@ -507,29 +506,28 @@ export default {
                 position: relative;
                 fill: var(--yellow);
                 stroke: var(--yellow);
-                margin-left: 0.5rem;
+                /* margin-left: 0.5rem; */
             }
 
-            .infoPop:has(.errorInfo:hover) {
-                display: block;
-                position: absolute;
-                bottom: 100%;
-                left: 100%;
-                content: '';
-                background-color: var(--base);
-                border: 1px solid var(--crust);
-                border-radius: 10px;
 
-                padding: 1rem;
+        }
 
-                height: min-content;
-                max-height: 5rem;
-                width: max-content;
-            }
 
-            .infoPop {
-                display: none;
-            }
+        .exchange-obj:hover > .infoPop {
+            display: block;
+            position: absolute;
+            background-color: var(--base);
+            border: 1px solid var(--crust);
+            border-radius: 10px;
+            padding: 1rem;
+            height: min-content;
+            /* max-height: 5rem; */
+            width: max-content;
+            max-width: 50dvw;
+        }
+
+        .infoPop {
+            display: none;
         }
 
         .exchange-obj:nth-child(odd) { 
@@ -587,7 +585,7 @@ export default {
 
             position: relative;
         }
-        .text-input::before {
+        .text-input:empty:before {
             content:"";
             display:inline-block;
         }
@@ -616,6 +614,28 @@ export default {
             height: 20px;
             width: 1px;
             background-color: var(--blue);
+        }
+    }
+
+    @media (max-width: 1080px) {
+        .input-bar {
+            width: 30ch;
+
+            .text-input::after {
+                translate: calc(1ch * mod(v-bind(pos), 24)) 
+                    calc(
+                        2ch * (
+                            round(
+                                down, 
+                                (
+                                    v-bind(pos) - (v-bind(eq_len) - mod(
+                                        v-bind(eq_len), 24
+                                        ))
+                                )/ 24
+                            )
+                        )
+                    );
+        }
         }
     }
 }
