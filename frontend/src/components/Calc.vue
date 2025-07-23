@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Calculate } from '../../wailsjs/go/main/App';
+import { EventsOn } from "../../wailsjs/runtime/runtime.js";
 // import { parse, HtmlGenerator } from 'latex.js';
 
 const allowed_symbols = [
@@ -15,12 +16,19 @@ interface Result {
     ErrorID : number;
 }
 
+interface Variable {
+    Variable: string,
+    Equation: string,
+    Dependency: string[],
+}
+
 export default {
     data() {
         return {
             scrollPos: 0,
             scrollDelay: false,
             equation: "",
+            variables: [] as Variable[],
             pos: 0,
             eq_len: 0,
             history: [""],
@@ -33,6 +41,32 @@ export default {
         document.addEventListener("keydown", this.input);
         document.addEventListener("paste", this.paste)
         document.getElementById('keyboard-scroll')?.addEventListener("wheel", this.keyboardScroll);
+
+        EventsOn('app:variable_defined', (event: Variable) => {
+            /* console.log("Defining Variable") */
+            let a = -1
+            for(let i = 0; i < this.variables.length; i++) {
+                if(this.variables[i].Variable == event.Variable) {
+                    a = i
+                    break
+                }
+            }
+            if (a != -1) {
+                this.variables[a] = event
+            } else {
+                this.variables.push(event)
+            }
+        });
+
+        EventsOn('app:variable_dropped', (event: Variable) => {
+            console.log("Dropping Variable")
+            for(var i = 0; i < this.variables.length; i++) {
+                if(this.variables[i].Variable == event.Variable) {
+                    console.log("Variable to delete: ", event.Variable, " Variable found to delete: ", this.variables[i].Variable, " at: ", i)
+                    this.variables.splice(i, 1);
+                }
+            }
+        });
     },
     methods: {
         modelLightSwtich(event: Event) {
@@ -197,7 +231,7 @@ export default {
                     <span class="slider">
                         <!-- <img class="switch-img" src="../assets/images/Sun.svg"> -->
                         <div class="switch-img">
-                            <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                            <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
                                 <g>  
                                     <circle style="fill:none;paint-order:stroke fill markers;stroke-width:35;stroke-dasharray:none" id="path1" cx="256" cy="256" r="100" />
                                     <rect style="stroke:none;paint-order:stroke fill markers" id="rect1" width="35" height="95" x="238.13339" y="13" rx="0" ry="0" />
@@ -236,7 +270,7 @@ export default {
                             <p>
                                 <!-- {{ item.ErrorID }} : -->
                                 <span v-if="item.Error != '' && item.Equation == ''" class="fatalError">
-                                    <svg width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" id="svg1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                                    <svg v-if="item.ErrorID < 200" width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" id="svg1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
                                         <g>
                                             <circle style="fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:50;stroke-dasharray:none" id="path1" cx="256" cy="256" r="228.60632"/>
                                             <rect style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;paint-order:stroke fill markers" id="rect1" width="65.602287" height="350.21713" x="-32.801144" y="186.9301" ry="35.191429" transform="rotate(-45)" rx="32.801144"/>
@@ -272,16 +306,54 @@ export default {
             </div>
         </div>
 
-        <div class="rsidebar">f(x)=x^2-4</div>
+        <div class="rsidebar">
+            <div class="rsidebar-scroll-container">
+                <p class="rsidebar-heading">Variables</p>
+                <div class="variables">
+                    <div class="var-obj" v-for="item in variables">
+                        {{ item.Variable }} = {{ item.Equation }}
+                    </div>
+                </div>
+                <p class="rsidebar-heading">Functions</p>
+                <div class="functions"></div>
+            </div>
+        </div>
 
         <div class="bottombar" id="keyboard-container">
             <div class="switch">
-                <button @click="keyboardScrollNum" class="switch-pos"><img class="switch-pos-img"
-                        src="../assets/images/tauri.svg"></button>
-                <button @click="keyboardScrollMath1" class="switch-pos"><img class="switch-pos-img"
-                        src="../assets/images/tauri.svg"></button>
-                <button @click="keyboardScrollMath2" class="switch-pos"><img class="switch-pos-img"
-                        src="../assets/images/tauri.svg"></button>
+                <button @click="keyboardScrollNum" class="switch-pos">
+                    <svg class="switch-pos-img" width="512mm" height="512mm" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                        <g xmlns="http://www.w3.org/2000/svg" inkscape:label="Layer 1" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" inkscape:groupmode="layer" id="layer1">
+                            <!-- <rect style="fill-opacity:1;paint-order:stroke fill markers;fill:none;stroke-width:30;stroke-dasharray:none" id="rect1" width="400" height="400" x="56" y="56" ry="48.337254"/> -->
+                            <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:304.898px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:3.74007px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:384.122;stroke-opacity:1;paint-order:stroke fill markers" x="254.56429" y="282.48392" id="text6"><tspan sodipodi:role="line" style="line-height:1;stroke-width:384.124;fill:var(--maroon)" x="254.56429" y="282.48392" id="tspan8">÷</tspan></text>
+                            <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:315.823px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:3.87408px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:397.887;stroke-opacity:1;paint-order:stroke fill markers" x="251.4447" y="451.51575" id="text6-8"><tspan sodipodi:role="line" style="line-height:1;stroke-width:397.889;fill:var(--sky)" x="251.4447" y="451.51575" id="tspan8-8">×</tspan></text>
+                            <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:315.823px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:3.87408px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:397.887;stroke-opacity:1;paint-order:stroke fill markers" x="79.671394" y="285.3269" id="text6-8-1"><tspan sodipodi:role="line" style="line-height:1;stroke-width:397.889;fill:var(--sky)" x="79.671394" y="285.3269" id="tspan11">+</tspan></text>
+                            <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:315.823px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:3.87408px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:397.887;stroke-opacity:1;paint-order:stroke fill markers" x="79.671394" y="451.19992" id="text6-8-1-6"><tspan sodipodi:role="line" style="line-height:1;stroke-width:397.889;fill:var(--maroon)" x="79.671394" y="451.19992" id="tspan11-1">-</tspan></text>
+                        </g>
+                    </svg>
+                </button>
+                <button @click="keyboardScrollMath1" class="switch-pos">
+                    <svg class="switch-pos-img" width="512mm" height="512mm" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                        <g id="layer1">
+                            <!-- <rect style="fill-opacity:1;paint-order:stroke fill markers;fill:none;stroke-width:30;stroke-dasharray:none" id="rect1" width="400" height="400" x="56" y="56" ry="48.337254"/> -->
+                            <text xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:197.486px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:2.42249px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" x="76.5839" y="234.04414" id="text12"><tspan sodipodi:role="line" id="tspan12" style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;fill:var(--maroon)" x="76.5839" y="234.04414">def</tspan></text>                        
+                            <text xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:197.486px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:2.42249px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" x="76.5839" y="407.20685" id="text12-7"><tspan sodipodi:role="line" id="tspan12-9" style="fill-opacity:1;stroke:none;stroke-width:0;stroke-dasharray:none;fill:var(--sky)" x="76.5839" y="407.20685">sol</tspan></text>                      
+                        </g>
+                    </svg>
+                </button>
+                <button @click="keyboardScrollMath2" class="switch-pos">
+                    <svg class="switch-pos-img" width="512mm" height="512mm" viewBox="0 0 512 512" version="1.1" id="svg1" inkscape:version="1.4 (86a8ad7, 2024-10-11)" sodipodi:docname="Calc_1.svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                      <g id="layer1">
+                        <!-- <rect style="display:inline;fill:none;fill-opacity:1;paint-order:stroke fill markers;stroke-width:30;stroke-dasharray:none" id="rect1" width="400" height="400" x="56" y="56" ry="48.337254"/> -->
+                        <text xml:space="preserve" transform="matrix(1.015818,0,0,1.015818,-565.1203,-658.28699)" id="text12" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:150px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:1.84px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect12);display:inline;fill:var(--sky);fill-opacity:1;stroke: none;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"><tspan x="638.08398" y="879.26065" id="tspan4"><tspan dx="0 0 0 0 -1.84" id="tspan3">fn()</tspan></tspan></text>
+                        <text xml:space="preserve" transform="matrix(0.26458333,0,0,0.26458333,122.80388,9.3268567)" id="text14-2" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:150px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:1.84px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect14-3);display:inline;fill:#4c4f69;fill-opacity:1;stroke:#4c4f69;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"/>
+                        <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:174.383px;line-height:1;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:start;letter-spacing:0px;word-spacing:2.1391px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#e64553;fill-opacity:1;stroke:#4c4f69;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" x="106.66274" y="419.96066" id="text15"><tspan sodipodi:role="line" style="fill:var(--maroon);stroke-width:0;-inkscape-font-specification:'Times New Roman, ';font-family:'Times New Roman';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal" x="106.66274" y="419.96066" id="tspan17">λ</tspan></text>
+                        <text xml:space="preserve" transform="scale(0.26458333)" id="text19" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:150px;line-height:1;font-family:'JetBrainsMono Nerd Font';-inkscape-font-specification:'JetBrainsMono Nerd Font';text-align:start;letter-spacing:0px;word-spacing:1.84px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect19);display:inline;fill:#4c4f69;fill-opacity:1;stroke:#4c4f69;stroke-width:0;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"/>
+                        <rect style="fill:none;fill-opacity:1;stroke:var(--maroon);stroke-width:15.6235;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" id="rect20" width="113.27856" height="113.27856" x="288.67621" y="275.55365" ry="0"/>
+                        <circle style="fill:none;fill-opacity:1;stroke:var(--sky);stroke-width:15.6235;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers" id="path19" cx="288.25027" cy="369.89761" r="51.567104"/>
+                      </g>
+                    </svg>
+                </button>
             </div>
             <div class="keyboard" id="keyboard-scroll">
                 <div class="keys key-1">
@@ -307,13 +379,13 @@ export default {
                             <div class="key" @click="enter('/')">/</div>
                             <div class="key" @click="enter('(')">(</div>
                             <div class="key" @click="enter(')')">)</div>
-                            <div class="key" @click="enter('sqrt()')">sqrt</div>
+                            <div class="key" @click="enter('sqrt(')">sqrt</div>
                             <div class="key" @click="enter('^')">^</div>
-                            <div class="key" @click="enter('log()')">log</div>
-                            <div class="key" @click="enter('ln()')">ln</div>
+                            <div class="key" @click="enter('log(')">log</div>
+                            <div class="key" @click="enter('ln(')">ln</div>
                             <div class="key" @click="enter('=')">=</div>
                             <div class="key" @click="enter('.')">.</div>
-                            <div class="key" @click="enter('')"></div>
+                            <div class="key" @click="enter(' ')">_</div>
                             <div class="key" @click="remove"><-</div>
                             <div class="key red-key" @click="clear">clr</div>
                             <div class="key blue-key" @click="exe">exe</div>
@@ -338,7 +410,7 @@ export default {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: 50px 11fr 4fr;
+    grid-template-columns: 50px 11fr 400px;
     grid-template-rows: 1fr 16rem;
     grid-template-areas:
         "lsidebar main rsidebar"
@@ -347,6 +419,7 @@ export default {
 
 @media (max-width: 1080px) {
     .grid {
+        grid-template-columns: 50px 11fr 13rem;
         grid-template-areas:
             "lsidebar main rsidebar"
             "bottombar bottombar bottombar";
@@ -496,7 +569,7 @@ export default {
 
             .fatalError {
                 svg {
-                    margin-right: 0.5rem;
+                    /* margin-right: 0.5rem; */
                     fill: var(--red);
                     stroke: var(--red);
                 }
@@ -548,9 +621,9 @@ export default {
 
         /* Handle */
     .exchange-container::-webkit-scrollbar-thumb {
-            border-radius: 10px;
-            background: var(--crust);
-        }
+        border-radius: 10px;
+        background: var(--crust);
+    }
 
 
     .input-bar-container {
@@ -580,6 +653,8 @@ export default {
             /* min-height: 20px; */
             height: 100%;
             padding: 10px;
+
+            line-break: anywhere;
 
             font-size: 18px;
 
@@ -617,25 +692,25 @@ export default {
         }
     }
 
-    @media (max-width: 1080px) {
+    @media (max-width: 720px) {
         .input-bar {
             width: 30ch;
 
             .text-input::after {
                 translate: calc(1ch * mod(v-bind(pos), 24)) 
-                    calc(
-                        2ch * (
-                            round(
-                                down, 
-                                (
-                                    v-bind(pos) - (v-bind(eq_len) - mod(
-                                        v-bind(eq_len), 24
-                                        ))
-                                )/ 24
-                            )
-                        )
-                    );
+                    calc(2ch * (round(down,(v-bind(pos) - (v-bind(eq_len) - mod(v-bind(eq_len), 24)))/ 24)));
+            }
         }
+    }
+
+    @media (min-width: 1080px) {
+        .input-bar {
+            width: 70ch;
+
+            .text-input::after {
+                translate: calc(1ch * mod(v-bind(pos), 60)) 
+                    calc(2ch * (round(down,(v-bind(pos) - (v-bind(eq_len) - mod(v-bind(eq_len), 60)))/ 60)));
+            }
         }
     }
 }
@@ -643,6 +718,56 @@ export default {
 .rsidebar {
     grid-area: rsidebar;
     background-color: var(--mantle);
+    border: 1px solid var(--crust);
+    width: 100%;
+    overflow-y: scroll;
+
+    .rsidebar-scroll-container {
+        width: 100%;
+        max-width: inherit;
+        display: flex;
+        flex-direction: column;
+        /* grid-template-rows: auto 1fr auto 1fr; */
+
+        .rsidebar-heading {
+            padding: 0.5rem;
+            text-align: center;
+            border-top: 1px solid var(--crust);
+        }
+
+        .variables {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 0.2rem;
+            gap: 0.2rem;
+
+            
+            .var-obj {
+                overflow: hidden;
+                background-color: var(--base);
+                border: 1px solid var(--crust);
+                border-radius: 10px;
+                padding: 1rem;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+.rsidebar::-webkit-scrollbar {
+    margin-right: 1rem;
+    width: 0.5rem;
+}
+
+.rsidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.rsidebar::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: var(--base);
     border: 1px solid var(--crust);
 }
 
@@ -703,6 +828,8 @@ export default {
         }
 
         .switch-pos-img {
+            /* fill: var(--text);
+            stroke: var(--text);; */
             width: 30px;
             height: 30px;
         }

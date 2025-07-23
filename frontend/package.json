@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@wailsio/runtime": "^3.0.0-alpha.66",
     "latex.js": "^0.12.6",
     "vue": "^3.2.37"
   },
